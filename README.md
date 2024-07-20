@@ -8,17 +8,11 @@ SuperMuPla is:
     - Fireboy & Watergirl (Local Co-Op)
 
 # Installation (currently Linux only)
-1. ensure you have python (and git) installed
-2. Download the source code
-    A. with git
+1. ensure you have python and git installed
+2. Clone the repo
 ```bash
 git clone https://github.com/Krist0FF-T/supermupla.git
 ```
-    B. from GitHub (without git)
-        1. go to https://github.com/Krist0FF-T/supermupla
-        2. Click the blue button that says "<> Code"
-        3. Click "Download ZIP" on the bottom of the popup
-
 3. run the setup script
 ```bash
 source setup.sh

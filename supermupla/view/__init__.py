@@ -1,3 +1,4 @@
-from .base import View
-from .game_view import GameView
+from .base import View, MenuView
+from .pause import PauseView
+from .settings import SettingsView
 
