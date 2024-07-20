@@ -14,7 +14,7 @@ class Game(View):
     def __init__(self, app):
         super().__init__(app)
         self.tile_manager = TileManager(self)
-        self.tile_manager.load_tiles()
+        self.tile_manager.load_chunks()
         self.camera = Camera(self)
 
     def update(self):

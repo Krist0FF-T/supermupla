@@ -1,13 +1,17 @@
 import pygame as pg
+import time
 
 from .view import View
 from .game import Game
+import OpenGL.GL as gl
 
 class App:
     def __init__(self):
-        self.vsync = True
-        self.fullscreen = True
-        self.screen = pg.display.set_mode((1280, 720))
+        pg.init()
+        self.vsync = False
+        self.fullscreen = False
+        self._create_window()
+        gl.glGetError()
         self.running: bool
         self.clock = pg.time.Clock()
         self.views: list[View] = []
@@ -16,8 +20,16 @@ class App:
 
     def run(self):
         self.running = True
+        lag = 0
+        c = 0
         while self.running:
-            self.clock.tick(self.fps)
+            # self.dt = self.clock.tick(self.fps)
+            if lag >= 1:
+                lag -= 1
+                print(c)
+                c = 0
+
+            t_start = time.time()
 
             events = pg.event.get()
             events = self._handle_global_events(events)
@@ -26,7 +38,11 @@ class App:
             self.current_view.update()
             self.current_view.draw()
 
-            pg.display.update()
+            pg.display.flip()
+
+            t_end = time.time()
+            lag += t_end - t_start
+            c += 1
 
     @property
     def current_view(self) -> View:
@@ -40,12 +56,21 @@ class App:
     def pop_view(self) -> View:
         return self.views.pop()
 
-    def _create_window(self, fullscreen=False):
+    def _create_window(self):
         flags = pg.OPENGL | pg.DOUBLEBUF
-        if fullscreen:
+        # flags = 0
+        if self.fullscreen:
             flags |= pg.FULLSCREEN
 
         self.screen = pg.display.set_mode((1280, 720), flags, vsync=self.vsync)
+
+        # info = pg.display.Info()
+        # if self.vsync:
+        #     if hasattr(info, "current_h"):
+        #         self.fps = pg.display.gl_get_attribute(pg.GL_)
+        # else:
+        #     self.fps = 60
+
 
     def _handle_global_events(self, events) -> list[pg.Event]:
         unhandled = []

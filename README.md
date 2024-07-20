@@ -9,7 +9,7 @@ SuperMuPla is:
 
 # Installation (currently Linux only)
 1. ensure you have python and git installed
-2. Clone the repo
+2. clone the repo
 ```bash
 git clone https://github.com/Krist0FF-T/supermupla.git
 ```
@@ -21,7 +21,7 @@ source setup.sh
 ```bash
 source venv/bin/activate
 ```
-5. run the game:
+5. run the game
 ```bash
 python3 supermupla.py
 ```

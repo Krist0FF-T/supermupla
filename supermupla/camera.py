@@ -15,7 +15,7 @@ class Camera:
 
     @property
     def tile_size(self):
-        return self.game.app.screen.height / self.height
+        return int(self.game.app.screen.height / self.height)
 
     def update(self, target: pg.Vector2):
         if self.mode == CAMERA_LERP:
@@ -31,12 +31,20 @@ class Camera:
         rx = (p.x - self.pos.x) * self.tile_size
         ry = (p.y - self.pos.y) * self.tile_size
         return (
-            self.game.app.screen.width  // 2 + rx,
-            self.game.app.screen.height // 2 + ry,
+            self.game.app.screen.width  // 2 + round(rx),
+            self.game.app.screen.height // 2 + round(ry),
         )
 
     def rect_to_screen(self, rect: pg.Rect):
         tl = self.point_to_screen(pg.Vector2(rect.x, rect.y))
         return pg.Rect(tl, (self.tile_size,) * 2)
+
+    def point_to_world(self, p: pg.Vector2):
+        rx = p.x - self.game.app.screen.width  / 2
+        ry = p.y - self.game.app.screen.height / 2
+        return (
+            rx / self.tile_size + self.pos.x,
+            ry / self.tile_size + self.pos.y
+        )
 
 

@@ -1,11 +1,13 @@
 import pygame as pg
 
-class TileManager:
+CHUNK_SIZE = 16
+
+class TileManager():
     def __init__(self, game):
         self.game = game
-        self.tiles = []
+        self.chunks = {}
 
-    def load_tiles(self):
+    def load_chunks(self):
         tilemap = [
             "B . B B . B . B B . B . B B . B",
             ". B B B B B B B B B B B B B B .",
@@ -25,7 +27,7 @@ class TileManager:
             "B . B B . B . B B . B . B B . B",
         ]
 
-        self.tiles = [
+        tiles = [
             [
                 int(c == 'B')
                 for c in row.split(" ")
@@ -33,34 +35,64 @@ class TileManager:
             for row in tilemap
         ]
 
+        self.chunks["0;0"] = tiles
+
+
+    def get_at(self, x: int, y: int):
+        local_x = x % CHUNK_SIZE
+        local_y = y % CHUNK_SIZE
+        return self.chunks["0;0"][local_y][local_x]
+
+        chunk_x = x // CHUNK_SIZE
+        chunk_y = y // CHUNK_SIZE
+        chunk_key = str(chunk_x) + ";" + str(chunk_y)
+
+        if chunk_key in self.chunks:
+            local_x = x % CHUNK_SIZE
+            local_y = y % CHUNK_SIZE
+            return self.chunks[chunk_key][local_y][local_x]
+
+        return 0
+
     def draw(self):
         screen = self.game.app.screen
         ts = self.game.camera.tile_size
 
-        img = pg.Surface((2, 2))
-        img.set_at((0, 0), "red")
-        img.set_at((0, 1), "green")
-        img.set_at((1, 0), "blue")
-        img.set_at((1, 1), "yellow")
-        img = pg.transform.scale(img, (ts, ts))
-
         colors = [
-            "black",
-            "blue",
+            "darkblue",
+            "darkgreen",
         ]
 
-        for i, row in enumerate(self.tiles):
-            for j, tile in enumerate(row):
+        def gen_img(color):
+            img = pg.Surface((ts, ts))
+            img.fill(color)
+            return img
+
+        imgs = [
+            gen_img(color)
+            for color in colors
+        ]
+
+
+        screen_topleft = pg.Vector2(0, 0)
+        screen_bottomright = pg.Vector2(self.game.app.screen.size)
+        x1, y1 = self.game.camera.point_to_world(screen_topleft)
+        x2, y2 = self.game.camera.point_to_world(screen_bottomright)
+
+        for y in range(int(y1-1), int(y2+1)):
+            for x in range(int(x1-1), int(x2+1)):
+                tile = self.get_at(x, y)
+
                 if tile == 0:
                     continue
 
-                # rect = pg.Rect(j * ts, i * ts, ts, ts)
-
-                rect_world = pg.Rect(j, i, 1, 1)
+                rect_world = pg.Rect(x, y, 1, 1)
                 rect = self.game.camera.rect_to_screen(rect_world)
 
-                pg.draw.rect(screen, "darkblue", rect)
-                pg.draw.rect(screen, "white", rect, 2)
+                color = colors[tile - 1]
+                pg.draw.rect(screen, color, rect)
+                # pg.draw.rect(screen, "white", rect, 2)
 
+                # img = imgs[tile - 1]
                 # screen.blit(img, rect)
 
