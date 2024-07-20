@@ -10,11 +10,11 @@
 # Telepítés (még csak Linuxon)
 1. telepíts python-t (és git-et) ha még nincs
 2. töltsd le a kódot
-    a) git-tel:
-        ```bash
-        git clone https://github.com/Krist0FF-T/supermupla
-        ```
-    b) GitHub-ról (git nélkül)
+    A. git-tel:
+```bash
+git clone https://github.com/Krist0FF-T/supermupla
+```
+    B. GitHub-ról (git nélkül)
         1. https://github.com/Krist0FF-T/supermupla
         2. nyomd meg a kék "Code" gombot
         3. alul "Download ZIP" gomb

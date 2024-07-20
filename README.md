@@ -10,30 +10,26 @@ SuperMuPla is:
 # Installation (currently Linux only)
 1. ensure you have python (and git) installed
 2. Download the source code
-    a) with git
-        ```bash
-        git clone https://github.com/Krist0FF-T/supermupla.git
-        ```
-    b) from GitHub (without git)
+    A. with git
+```bash
+git clone https://github.com/Krist0FF-T/supermupla.git
+```
+    B. from GitHub (without git)
         1. go to https://github.com/Krist0FF-T/supermupla
         2. Click the blue button that says "<> Code"
         3. Click "Download ZIP" on the bottom of the popup
 
 3. run the setup script
 ```bash
-# On Linux
 source setup.sh
-
-# On windows: there is no install script yet
 ```
 4. activate the created virtual environment:
 ```bash
-# On Linux
 source venv/bin/activate
 ```
 5. run the game:
 ```bash
-python supermupla.py
+python3 supermupla.py
 ```
 
 # Fun facts
