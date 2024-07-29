@@ -1,11 +1,14 @@
 import pygame as pg
+from .addon import TileType
 
 CHUNK_SIZE = 16
+
 
 class TileManager():
     def __init__(self, game):
         self.game = game
         self.chunks = {}
+        self.palette = ["air", "idk"]
 
     def load_chunks(self):
         tilemap = [
@@ -37,11 +40,10 @@ class TileManager():
 
         self.chunks["0;0"] = tiles
 
-
     def get_at(self, x: int, y: int):
-        local_x = x % CHUNK_SIZE
-        local_y = y % CHUNK_SIZE
-        return self.chunks["0;0"][local_y][local_x]
+        # local_x = x % CHUNK_SIZE
+        # local_y = y % CHUNK_SIZE
+        # return self.chunks["0;0"][local_y][local_x]
 
         chunk_x = x // CHUNK_SIZE
         chunk_y = y // CHUNK_SIZE
@@ -56,23 +58,22 @@ class TileManager():
 
     def draw(self):
         screen = self.game.app.screen
-        ts = self.game.camera.tile_size
+        # ts = self.game.camera.tile_size
 
         colors = [
             "darkblue",
             "darkgreen",
         ]
 
-        def gen_img(color):
-            img = pg.Surface((ts, ts))
-            img.fill(color)
-            return img
+        # def gen_img(color):
+        #     img = pg.Surface((ts, ts))
+        #     img.fill(color)
+        #     return img
 
-        imgs = [
-            gen_img(color)
-            for color in colors
-        ]
-
+        # imgs = [
+        #     gen_img(color)
+        #     for color in colors
+        # ]
 
         screen_topleft = pg.Vector2(0, 0)
         screen_bottomright = pg.Vector2(self.game.app.screen.size)
@@ -95,4 +96,3 @@ class TileManager():
 
                 # img = imgs[tile - 1]
                 # screen.blit(img, rect)
-

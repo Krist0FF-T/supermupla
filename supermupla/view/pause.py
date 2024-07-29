@@ -3,6 +3,7 @@ import pygame as pg
 from .settings import SettingsView
 from .base import MenuView
 
+
 class PauseView(MenuView):
     def __init__(self, app):
         super().__init__(app)
@@ -18,10 +19,7 @@ class PauseView(MenuView):
         pg.draw.rect(self.app.screen, "white", rect1)
         pg.draw.rect(self.app.screen, "white", rect2)
 
-    def handle_events(self, events: list[pg.Event]):
-        for ev in events:
-            if ev.type == pg.KEYDOWN:
-                if ev.key == pg.K_s:
-                    self.app.push_view(SettingsView(self.app))
-
-
+    def handle_event(self, ev: pg.Event):
+        if ev.type == pg.KEYDOWN:
+            if ev.key == pg.K_s:
+                self.app.push_view(SettingsView(self.app))

@@ -1,54 +1,47 @@
 import pygame as pg
-import time
+from time import sleep
 
-from .view import View
+from .view import View, PauseView
 from .game import Game
-import OpenGL.GL as gl
+from .config import Config
+
 
 class App:
-    def __init__(self):
+    def __init__(self, config: Config):
         pg.init()
-        self.vsync = False
-        self.fullscreen = False
+        self.config = config
         self._create_window()
-        gl.glGetError()
         self.running: bool
         self.clock = pg.time.Clock()
         self.views: list[View] = []
         self.game = Game(self)
-        self.fps = 60
+        self.current_view = self.game
 
     def run(self):
         self.running = True
-        lag = 0
-        c = 0
         while self.running:
-            # self.dt = self.clock.tick(self.fps)
-            if lag >= 1:
-                lag -= 1
-                print(c)
-                c = 0
+            target_fps = self.config.fps
+            if self.config.vsync:
+                target_fps = 0
 
-            t_start = time.time()
+            dt_sec = self.clock.tick(target_fps) / 1000
+            dt_sec = min(dt_sec, 0.1)
+            # print(round(self.clock.get_fps()))
+
+            if self.views:
+                self.current_view = self.views[-1]
+            else:
+                self.current_view = self.game
 
             events = pg.event.get()
-            events = self._handle_global_events(events)
-            self.current_view.handle_events(events)
+            for ev in events:
+                if not self._global_event(ev):
+                    self.current_view.handle_event(ev)
 
-            self.current_view.update()
+            self.current_view.update(dt_sec)
             self.current_view.draw()
 
             pg.display.flip()
-
-            t_end = time.time()
-            lag += t_end - t_start
-            c += 1
-
-    @property
-    def current_view(self) -> View:
-        if self.views:
-            return self.views[-1]
-        return self.game
 
     def push_view(self, view: View):
         self.views.append(view)
@@ -57,12 +50,17 @@ class App:
         return self.views.pop()
 
     def _create_window(self):
-        flags = pg.OPENGL | pg.DOUBLEBUF
-        # flags = 0
-        if self.fullscreen:
+        # flags = pg.OPENGL | pg.DOUBLEBUF
+        flags = pg.RESIZABLE
+        size = (0, 0)
+        if self.config.fullscreen:
             flags |= pg.FULLSCREEN
+        else:
+            size = self.config.window_size
 
-        self.screen = pg.display.set_mode((1280, 720), flags, vsync=self.vsync)
+        self.screen = pg.display.set_mode(
+            size, flags, vsync=self.config.vsync
+        )
 
         # info = pg.display.Info()
         # if self.vsync:
@@ -71,27 +69,23 @@ class App:
         # else:
         #     self.fps = 60
 
+    def _global_event(self, ev: pg.Event) -> bool:
+        if ev.type == pg.QUIT:
+            self.running = False
+            return True
 
-    def _handle_global_events(self, events) -> list[pg.Event]:
-        unhandled = []
-
-        for ev in events:
-            handled = True
-
-            if ev.type == pg.QUIT:
-                self.running = False
-
-            if ev.type == pg.KEYDOWN:
-                if ev.key == pg.K_ESCAPE and self.views:
+        elif ev.type == pg.KEYDOWN:
+            if ev.key == pg.K_ESCAPE:
+                if self.views:
                     self.pop_view()
-                    # self.running = False
-
                 else:
-                    handled = False
+                    self.push_view(PauseView(self))
+                return True
 
-            if not handled:
-                unhandled.append(ev)
+            elif ev.key == pg.K_n:
+                sleep(2)
 
-        return unhandled
+        elif ev.type == pg.WINDOWRESIZED:
+            print(ev.x, ev.y)
 
-
+        return False
