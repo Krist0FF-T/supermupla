@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -11,8 +12,12 @@ class Config:
     - window_size: size if not fullscreen (screen resolution otherwise)
     '''
 
+    # window config
     fps: int
     vsync: bool
     fullscreen: bool
     window_size: tuple[int, int]
+
+    # other
+    font: Path
     addons: list[str]

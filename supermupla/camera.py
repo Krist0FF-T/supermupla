@@ -3,6 +3,7 @@ import pygame as pg
 CAMERA_INSTANT = 0
 CAMERA_LERP = 1
 
+
 class Camera:
     def __init__(self, game, mode=CAMERA_INSTANT):
         self.game = game
@@ -15,7 +16,7 @@ class Camera:
 
     @property
     def tile_size(self):
-        return int(self.game.app.screen.height / self.height)
+        return self.game.app.screen.height / self.height
 
     def update(self, target: pg.Vector2):
         if self.mode == CAMERA_LERP:
@@ -30,21 +31,22 @@ class Camera:
     def point_to_screen(self, p: pg.Vector2):
         rx = (p.x - self.pos.x) * self.tile_size
         ry = (p.y - self.pos.y) * self.tile_size
-        return (
-            self.game.app.screen.width  // 2 + round(rx),
+        return pg.Vector2(
+            self.game.app.screen.width // 2 + round(rx),
             self.game.app.screen.height // 2 + round(ry),
         )
 
     def rect_to_screen(self, rect: pg.Rect):
-        tl = self.point_to_screen(pg.Vector2(rect.x, rect.y))
-        return pg.Rect(tl, (self.tile_size,) * 2)
+        tl = self.point_to_screen(pg.Vector2(rect.left, rect.top))
+        br = self.point_to_screen(pg.Vector2(rect.right, rect.bottom))
+        w = br.x - tl.x
+        h = br.y - tl.y
+        return pg.Rect(tl, (w, h))
 
-    def point_to_world(self, p: pg.Vector2):
-        rx = p.x - self.game.app.screen.width  / 2
+    def point_to_world(self, p: pg.Vector2) -> pg.Vector2:
+        rx = p.x - self.game.app.screen.width / 2
         ry = p.y - self.game.app.screen.height / 2
-        return (
+        return pg.Vector2(
             rx / self.tile_size + self.pos.x,
             ry / self.tile_size + self.pos.y
         )
-
-
