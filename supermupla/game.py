@@ -44,3 +44,6 @@ class Game(View):
 
             if ev.key == pg.K_t:
                 self.app.push_view(EditorView(self.app))
+
+            if ev.key == pg.K_r:
+                self.app.plugin_manager.reload()

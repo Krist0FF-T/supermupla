@@ -1,11 +1,11 @@
 import pygame as pg
-from time import sleep
+from time import sleep, time
 import sys
 
 from supermupla.asset_manager import AssetManager
 from supermupla.view.editor import EditorView
 
-from .addon_manager import AddonManager
+from .plugin_manager import PluginManager
 
 from .view import View
 from .game import Game
@@ -18,8 +18,16 @@ class App:
         self.config = config
         self._create_window()
 
-        self.addon_manager = AddonManager()
-        self.addon_manager.load_addons(self.config.addons)
+        start = time()
+        self.plugin_manager = PluginManager(self)
+        self.plugin_manager.sync_globals(config.addons)
+        end = time()
+        print(
+            "loaded {n} plugins in {ms:.2f}ms".format(
+                n=len(self.plugin_manager.loaded),
+                ms=(end - start) * 1000
+            )
+        )
 
         self.views: list[View] = []
         self.game = Game(self)
@@ -66,7 +74,6 @@ class App:
         sys.exit()
 
     def _create_window(self):
-        # flags = pg.OPENGL | pg.DOUBLEBUF
         flags = pg.RESIZABLE
         size = (0, 0)
         if self.config.fullscreen:
@@ -78,13 +85,6 @@ class App:
         self.screen = pg.display.set_mode(
             size, flags, vsync=self.config.vsync
         )
-
-        # info = pg.display.Info()
-        # if self.vsync:
-        #     if hasattr(info, "current_h"):
-        #         self.fps = pg.display.gl_get_attribute(pg.GL_)
-        # else:
-        #     self.fps = 60
 
     def _global_event(self, ev: pg.Event) -> bool:
         if ev.type == pg.QUIT:
@@ -100,8 +100,5 @@ class App:
 
             elif ev.key == pg.K_n:
                 sleep(2)
-
-        elif ev.type == pg.WINDOWRESIZED:
-            print(ev.x, ev.y)
 
         return False

@@ -27,8 +27,8 @@ class AssetManager:
         if name in self.images:
             return self.images[name]
 
-        for addon in self.app.addon_manager.addons:
-            path = addon.get_image_path(name)
+        for plugin in self.app.plugin_manager.loaded.values():
+            path = plugin.get_image_path(name)
             if path and path.exists():
                 return self.load_image(name, path)
 

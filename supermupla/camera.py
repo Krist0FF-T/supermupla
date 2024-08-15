@@ -1,3 +1,4 @@
+from math import ceil
 import pygame as pg
 
 CAMERA_INSTANT = 0
@@ -32,15 +33,16 @@ class Camera:
         rx = (p.x - self.pos.x) * self.tile_size
         ry = (p.y - self.pos.y) * self.tile_size
         return pg.Vector2(
-            self.game.app.screen.width // 2 + round(rx),
-            self.game.app.screen.height // 2 + round(ry),
+            self.game.app.screen.width / 2 + rx,
+            self.game.app.screen.height / 2 + ry,
         )
 
     def rect_to_screen(self, rect: pg.Rect):
         tl = self.point_to_screen(pg.Vector2(rect.left, rect.top))
+        # print(tl)
         br = self.point_to_screen(pg.Vector2(rect.right, rect.bottom))
-        w = br.x - tl.x
-        h = br.y - tl.y
+        w = ceil(br.x - tl.x)
+        h = ceil(br.y - tl.y)
         return pg.Rect(tl, (w, h))
 
     def point_to_world(self, p: pg.Vector2) -> pg.Vector2:

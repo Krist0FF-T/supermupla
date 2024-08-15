@@ -2,7 +2,7 @@ import pygame as pg
 from math import floor  # -2 for -1.2
 
 from supermupla.view import View
-from supermupla.tile_manager import CHUNK_SIZE
+from supermupla.tile_manager import CHUNK_SIZE, tile_to_chunk_key
 
 SPEED = 20
 
@@ -11,16 +11,14 @@ class EditorView(View):
     def __init__(self, app):
         super().__init__(app)
         self.focused = (0, 0)
-        self.lerp_focused = (0, 0)
-        self.tile = "dirt"
+        self.tile = "aimbot"
+        self.chunk_mode = False
 
         # config
         self.grid_enabled = False
         self.chunk_borders_enabled = True
 
     def update(self, dt_sec: float):
-        if self.tile == "air":
-            self.tile = "dirt"
         keys = pg.key.get_pressed()
         cam = self.app.game.camera
 
@@ -35,6 +33,10 @@ class EditorView(View):
         cam.move(d)
 
         mouse_pos = pg.mouse.get_pos()
+        # mouse_pos = (
+        #     self.app.screen.width // 2,
+        #     self.app.screen.height // 2,
+        # )
         in_world = cam.point_to_world(pg.Vector2(mouse_pos))
         self.focused = (
             floor(in_world.x),
@@ -44,18 +46,49 @@ class EditorView(View):
         x, y = self.focused
         tm = self.app.game.tile_manager
 
-        mouse_buttons = pg.mouse.get_pressed()
-        if mouse_buttons[0]:
-            tm.set_at(x, y, "air")
-        if mouse_buttons[2] and tm.get_at(x, y) == "air":
-            tm.set_at(x, y, self.tile)
+        if not self.chunk_mode:
+            mouse_buttons = pg.mouse.get_pressed()
+            # mouse_buttons = [
+            #     keys[pg.K_j],
+            #     keys[pg.K_u],
+            #     keys[pg.K_k],
+            # ]
+            if mouse_buttons[0]:
+                tm.set_at(x, y, "air")
+            if mouse_buttons[2] and tm.get_at(x, y) == "air":
+                tm.set_at(x, y, self.tile)
+        else:
+            mouse_buttons = pg.mouse.get_just_pressed()
+            # _keys = pg.key.get_just_pressed()
+            # mouse_buttons = [
+            #     _keys[pg.K_j],
+            #     _keys[pg.K_u],
+            #     _keys[pg.K_k],
+            # ]
+            key = tile_to_chunk_key(*self.focused)
+            if mouse_buttons[0]:
+                tm.delete_chunk(key)
+            if mouse_buttons[2] and key not in tm.chunks:
+                tm.chunks[key] = tm.chunks["0;0"].copy()
+                # tm.clear_chunk(key, self.tile)
+
         if keys[pg.K_x]:
             self.tile = tm.get_at(x, y)
 
     def draw(self):
         self.app.screen.fill("skyblue")
         self.app.game.tile_manager.draw()
+
         self._draw_focused()
+
+        # pg.draw.circle(
+        #     self.app.screen, "red",
+        #     (
+        #         self.app.screen.width // 2,
+        #         self.app.screen.height // 2,
+        #     ),
+        #     5
+        # )
 
         if self.grid_enabled:
             self._draw_grid()
@@ -67,6 +100,11 @@ class EditorView(View):
         if ev.type == pg.KEYDOWN:
             if ev.key == pg.K_g:
                 self.grid_enabled = not self.grid_enabled
+            elif ev.key == pg.K_c:
+                # self.app.game.tile_manager.clear_chunk(
+                #     tile_to_chunk_key(*self.focused), self.tile
+                # )
+                self.chunk_mode = not self.chunk_mode
 
         elif ev.type == pg.MOUSEWHEEL:
             tm = self.app.game.tile_manager
@@ -76,13 +114,16 @@ class EditorView(View):
 
     def _draw_focused(self):
         x, y = self.focused
-        img = self.app.game.tile_manager.get_appearance(x, y, self.tile)
+        img_key = self.app.game.tile_manager.get_appearance(x, y, self.tile)
 
-        if not img:
+        if not img_key:
             return
 
-        rect_world = pg.Rect(x, y, 1, 1)
+        img = self.app.asset_manager.get_image(img_key)
+
+        rect_world = pg.Rect(x, y, 1.0, 1.0)
         rect = self.app.game.camera.rect_to_screen(rect_world)
+        pos = self.app.game.camera.point_to_screen(pg.Vector2(x, y))
 
         # idx = (x + y) % 2
         # color = colors[idx]
@@ -90,7 +131,7 @@ class EditorView(View):
 
         scaled = pg.transform.scale(img, (rect.width, rect.height))
         scaled.set_alpha(128)
-        self.app.screen.blit(scaled, rect)
+        self.app.screen.blit(scaled, pos)
 
     def _draw_grid(self):
         scr = self.app.screen
@@ -128,5 +169,5 @@ class EditorView(View):
                         CHUNK_SIZE
                     ))
 
-                    line_width = int(cam.tile_size * 0.1)
+                    line_width = max(int(cam.tile_size * 0.1), 1)
                     pg.draw.rect(scr, "darkblue", rect, line_width)

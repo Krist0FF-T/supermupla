@@ -1,14 +1,23 @@
 from dataclasses import dataclass
+import time
 from typing import Callable, Optional
 import pygame as pg
+from math import ceil, floor
 
-from supermupla.addon import TileType
+from supermupla.plugin import TileType
 
 CHUNK_SIZE = 16
 
 
 def chunk_key(x: int, y: int) -> str:
     return str(x) + ";" + str(y)
+
+
+def tile_to_chunk_key(x: int, y: int) -> str:
+    return chunk_key(
+        floor(x / CHUNK_SIZE),
+        floor(y / CHUNK_SIZE)
+    )
 
 
 @dataclass
@@ -23,14 +32,20 @@ class TileManager():
     def __init__(self, game):
         self.game = game
         self.chunks = {}
+
         self.palette = [
             tt.name
-            for tt in self.game.app.addon_manager.every_tiletype()
+            for tt in self.game.app.plugin_manager.every_tiletype()
         ]
+
         self.reverse_palette = {
             name: idx
             for idx, name in enumerate(self.palette)
         }
+
+        self.scaled_cache: dict[str, pg.Surface] = {}
+        self.cache_tile_size = 0
+        self.fpss = []
 
     def load_chunks(self):
         tilemap = [
@@ -67,14 +82,19 @@ class TileManager():
             for row in tilemap
         ]
 
-    def clear_chunk(self, key: str):
+    def clear_chunk(self, key: str, name="air"):
         self.chunks[key] = [
             [
-                self.reverse_palette["air"]
+                self.reverse_palette[name]
                 for _ in range(CHUNK_SIZE)
             ]
             for _ in range(CHUNK_SIZE)
         ]
+
+    def delete_chunk(self, key: str):
+        if key in self.chunks:
+            # print(self.chunks[key])
+            self.chunks.pop(key)
 
     def get_at(self, x: int, y: int) -> str:
         # local_x = x % CHUNK_SIZE
@@ -111,7 +131,7 @@ class TileManager():
     def _get_neighbors(self, x: int, y: int):
         def g(dx: int, dy: int):
             name = self.get_at(x + dx, y + dy)
-            return self.game.app.addon_manager.get_tiletype(name)
+            return self.game.app.plugin_manager.get_tiletype(name)
 
         return Neighbors(
             top=g(0, -1),
@@ -125,9 +145,11 @@ class TileManager():
             x: int = 0,
             y: int = 0,
             name: Optional[str] = None
-    ) -> Optional[pg.Surface]:
-        name = name if name else self.get_at(x, y)
-        t = self.game.app.addon_manager.get_tiletype(name)
+    ) -> Optional[str]:
+        if not name:
+            name = self.get_at(x, y)
+
+        t = self.game.app.plugin_manager.get_tiletype(name)
         a = t.appearance
 
         if not a:
@@ -137,47 +159,98 @@ class TileManager():
             neighbors = self._get_neighbors(x, y)
             a = a(neighbors)
 
-        return self.game.app.asset_manager.get_image(a)
+        return a
 
-    def draw(self):
-        screen = self.game.app.screen
-        # ts = self.game.camera.tile_size
+    def get_scaled(self, img_key: str) -> pg.Surface:
+        if img_key in self.scaled_cache:
+            return self.scaled_cache[img_key]
 
-        # colors = [
-        #     # "darkblue",
-        #     # "darkgreen",
-        #     "black",
-        #     "white"
-        # ]
+        img = self.game.app.asset_manager.get_image(img_key)
+        s = (self.cache_tile_size, ) * 2
+        scaled = pg.transform.scale(img, s)
+        self.scaled_cache[img_key] = scaled
+        return scaled
 
-        # def gen_img(color):
-        #     img = pg.Surface((ts, ts))
-        #     img.fill(color)
-        #     return img
+    def _draw_chunk(self, chx: int, chy: int) -> list[tuple]:
+        k = chunk_key(chx, chy)
 
-        # imgs = [
-        #     gen_img(color)
-        #     for color in colors
-        # ]
+        if k not in self.chunks:
+            return []
 
-        screen_topleft = pg.Vector2(0, 0)
-        screen_bottomright = pg.Vector2(self.game.app.screen.size)
-        x1, y1 = self.game.camera.point_to_world(screen_topleft)
-        x2, y2 = self.game.camera.point_to_world(screen_bottomright)
+        blits = []
 
-        for y in range(int(y1-1), int(y2+1)):
-            for x in range(int(x1-1), int(x2+1)):
-                img = self.get_appearance(x, y)
+        for i in range(CHUNK_SIZE):
+            for j in range(CHUNK_SIZE):
+                tx = chx * CHUNK_SIZE + j
+                ty = chy * CHUNK_SIZE + i
 
-                if not img:
+                img_key = self.get_appearance(tx, ty)
+
+                if not img_key:
                     continue
 
-                rect_world = pg.Rect(x, y, 1, 1)
-                rect = self.game.camera.rect_to_screen(rect_world)
+                if img_key in self.scaled_cache:
+                    scaled = self.scaled_cache[img_key]
 
-                # idx = (x + y) % 2
-                # color = colors[idx]
-                # pg.draw.rect(screen, color, rect)
+                else:
+                    img = self.game.app.asset_manager.get_image(img_key)
+                    s = (self.cache_tile_size, ) * 2
+                    scaled = pg.transform.scale(img, s)
+                    self.scaled_cache[img_key] = scaled
+                    # print("cached", img_key, time.time(), s)
 
-                scaled = pg.transform.scale(img, (rect.width, rect.height))
-                screen.blit(scaled, rect)
+                p = pg.Vector2(tx, ty)
+                p = self.game.camera.point_to_screen(p)
+
+                # self.game.app.screen.blit(scaled, p)
+                blits.append((scaled, p))
+
+        # self.game.app.screen.blits(blits)
+        return blits
+
+    def draw(self):
+        scr = self.game.app.screen
+        cam = self.game.camera
+        ts = ceil(self.game.camera.tile_size)
+
+        if ts != self.cache_tile_size:
+            self.scaled_cache.clear()
+            self.cache_tile_size = ts
+
+        tl_tile = cam.point_to_world(pg.Vector2(0, 0))
+        br_tile = cam.point_to_world(pg.Vector2(scr.size))
+
+        tl_chunk = (
+            floor(tl_tile.x / CHUNK_SIZE),
+            floor(tl_tile.y / CHUNK_SIZE)
+        )
+
+        br_chunk = (
+            ceil(br_tile.x / CHUNK_SIZE),
+            ceil(br_tile.y / CHUNK_SIZE)
+        )
+
+        start = time.time()
+
+        c = 0
+        dc = 0
+        blits: list[tuple] = []
+        for chunk_y in range(tl_chunk[1], br_chunk[1]):
+            for chunk_x in range(tl_chunk[0], br_chunk[0]):
+                c += 1
+
+                k = chunk_key(chunk_x, chunk_y)
+                if k in self.chunks:
+                    blits += self._draw_chunk(chunk_x, chunk_y)
+                    dc += 1
+
+        self.game.app.screen.blits(blits)
+
+        end = time.time()
+        fps = int(1 / (end - start))
+        self.fpss.append(fps)
+        if len(self.fpss) > 10:
+            # self.fpss.pop(0)
+            avg_fps = int(sum(self.fpss) / len(self.fpss))
+            print(f"{dc}/{c}", "chunks", len(blits), "tiles", avg_fps, "fps")
+            self.fpss.clear()

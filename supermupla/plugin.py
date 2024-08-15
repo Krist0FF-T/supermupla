@@ -10,7 +10,7 @@ class TileType:
     appearance: None | str | Callable = None
 
 
-class Addon:
+class Plugin:
     def __init__(
         self,
         name: str = "Unnamed addon",
