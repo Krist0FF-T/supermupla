@@ -1,4 +1,7 @@
 
+# 2026-09-26
+- move `main.py` to `supermupla/__main__.py`
+
 # 2024-08-14
 - rename the term "addon" to "plugin"
     - also thought about "mod", but it's short for "MODification", but in my case

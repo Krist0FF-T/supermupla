@@ -23,7 +23,7 @@ source venv/bin/activate
 ```
 5. run the game
 ```bash
-python3 supermupla.py
+python3 -m supermupla
 ```
 
 # Fun facts
