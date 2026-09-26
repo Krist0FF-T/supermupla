@@ -1,30 +1,31 @@
-# SuperMuPla ([Magyar](https://github.com/Krist0FF-T/supermupla/blob/main/README-HU.md))
-SuperMuPla is:
-- really early in development... you couldn't even call it a game
-- going to be (hopefully) a simple 2D platformer game written, configurable, and extensible in Python (custom enemies, blocks and levels).
-- a cleaner rewrite of [SuperMuki](https://github.com/Krist0FF-T/supermuki), which I wrote in February 2022
-- inspired by
-    - [SuperTux](https://github.com/SuperTux/supertux), Super Mario Bros, and some other 2D platformers starting with "Super"
-    - Fireboy & Watergirl (Local Co-Op)
 
-# Installation (currently Linux only)
+# SuperMuPla
+SuperMupla is a heavily work-in-progress 2D platformer game engine
+written, configurable, and extensible in Python (custom enemies, blocks and levels).
+Think of it as [Luanti](https://www.luanti.org), but 2D instead of 3D.
+
+It started as the successor to [SuperMuki](https://github.com/Krist0FF-T/supermuki),
+but they're both slowly converging towards the same state.
+I'm still not sure which to focus on.
+
+<!-- TODO: add screenshot(s) -->
+
+# Running
 1. ensure you have python and git installed
 2. clone the repo
 ```bash
 git clone https://github.com/Krist0FF-T/supermupla.git
 ```
-3. run the setup script
+3. set up and activate the virtual environment (or `nix-shell` on nixos)
 ```bash
-source setup.sh
-```
-4. activate the created virtual environment:
-```bash
+source setup_venv.sh
 source venv/bin/activate
 ```
-5. run the game
+4. run the game
 ```bash
 python3 -m supermupla
 ```
+
 
 # Fun facts
 
@@ -34,7 +35,4 @@ Name origin:
 - super: because many 2d platformers start with "super"
 - mu: **mu**lti- (-player)
 - pla: -**pla**yer or **pla**tformer
-
-
-
 

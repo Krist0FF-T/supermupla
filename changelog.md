@@ -1,6 +1,8 @@
 
 # 2026-09-26
 - move `main.py` to `supermupla/__main__.py`
+- polished readme
+- made nix shell cleaner
 
 # 2024-08-14
 - rename the term "addon" to "plugin"
